@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>DID Key Demo</title>
+</head>
+<body>
+<h2>DID Key 產生與簽章驗章 Demo</h2>
+
+<form th:action="@{/generate}" method="post">
+    <button type="submit">產生 DID Key</button>
+</form>
+
+<div th:if="${did != null}">
+    <p><b>DID:</b> <span th:text="${did}"></span></p>
+    <p><b>Public Key:</b> <span th:text="${publicKey}"></span></p>
+    <p><b>Private Key:</b> <span th:text="${privateKey}"></span></p>
+</div>
+
+<hr/>
+<form th:action="@{/sign}" method="post" id="signForm">
+    <div id="kv-container">
+        <div class="kv-row">
+            <input type="text" name="keys" placeholder="Key" required/>
+            <input type="text" name="values" placeholder="Value" required/>
+            <button type="button" onclick="addKVRow()">+</button>
+        </div>
+    </div>
+    <button type="submit">簽章</button>
+</form>
+<script>
+function addKVRow() {
+    const container = document.getElementById('kv-container');
+    const row = document.createElement('div');
+    row.className = 'kv-row';
+    row.innerHTML = `
+        <input type="text" name="keys" placeholder="Key" required/>
+        <input type="text" name="values" placeholder="Value" required/>
+        <button type="button" onclick="removeKVRow(this)">-</button>
+    `;
+    container.appendChild(row);
+}
+function removeKVRow(btn) {
+    btn.parentNode.remove();
+}
+</script>
+<style>
+.kv-row { margin-bottom: 5px; }
+.kv-row input { margin-right: 5px; }
+</style>
+<div th:if="${signature != null}">
+    <p><b>簽章結果：</b> <span th:text="${signature}"></span></p>
+    <div th:if="${jwtHeader != null}">
+        <b>JWT Header：</b>
+        <pre th:text="${jwtHeader}"></pre>
+    </div>
+    <div th:if="${jwtPayload != null}">
+        <b>JWT Payload：</b>
+        <pre th:text="${jwtPayload}"></pre>
+    </div>
+</div>
+
+<hr/>
+<form th:action="@{/verify}" method="post">
+    <label>訊息：<br/>
+        <textarea name="message" rows="3" cols="60" th:text="${jwtPayload}" readonly></textarea>
+    </label><br/>
+    <label>簽章：<input type="text" name="signature" th:value="${signature}"/></label>
+    <button type="submit">驗章</button>
+</form>
+<div th:if="${verifyResult != null}">
+    <p><b>驗章結果：</b> <span th:text="${verifyResult}"></span></p>
+</div>
+
+<div th:if="${error != null}">
+    <p style="color:red;" th:text="${error}"></p>
+</div>
+
+</body>
+</html> 

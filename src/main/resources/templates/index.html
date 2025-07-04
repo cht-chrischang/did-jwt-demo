@@ -3,32 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <title>DID Key Demo (P-256)</title>
+    <style>
+        .kv-row { margin-bottom: 5px; }
+        .kv-row input { margin-right: 5px; }
+        .key-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .key-input { width: 100%; margin: 5px 0; }
+        .signature-field { width: 100%; height: 120px; font-family: monospace; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .section-title { font-weight: bold; margin-bottom: 10px; }
+    </style>
 </head>
 <body>
 <h2>DID Key 產生與簽章驗章 Demo (P-256)</h2>
 <p><em>使用 P-256 (ECDSA) 演算法</em></p>
 
-<form th:action="@{/generate}" method="post">
-    <button type="submit">產生 DID Key</button>
-</form>
+<!-- DID Key 產生區塊 -->
+<div class="key-section">
+    <div class="section-title">1. 產生 DID Key</div>
+    <form th:action="@{/generate}" method="post">
+        <button type="submit">產生 DID Key</button>
+    </form>
+</div>
 
-<div th:if="${did != null}">
+<!-- 自訂金鑰輸入區塊 -->
+<div class="key-section">
+    <div class="section-title">2. 或設定自訂金鑰</div>
+    <form th:action="@{/setCustomKeys}" method="post">
+        <label>Public Key (Base64):<br/>
+            <textarea name="publicKeyInput" class="key-input" rows="3" placeholder="請輸入 Base64 編碼的 Public Key" th:text="${publicKey}"></textarea>
+        </label><br/>
+        <label>Private Key (Base64):<br/>
+            <textarea name="privateKeyInput" class="key-input" rows="3" placeholder="請輸入 Base64 編碼的 Private Key" th:text="${privateKey}"></textarea>
+        </label><br/>
+        <button type="submit">設定自訂金鑰</button>
+    </form>
+</div>
+
+<!-- 顯示 DID 和金鑰資訊 -->
+<div th:if="${did != null}" class="key-section">
+    <div class="section-title">3. 金鑰資訊</div>
     <p><b>DID:</b> <span th:text="${did}"></span></p>
     <p><b>Public Key:</b> <span th:text="${publicKey}"></span></p>
     <p><b>Private Key:</b> <span th:text="${privateKey}"></span></p>
 </div>
 
 <hr/>
-<form th:action="@{/sign}" method="post" id="signForm">
-    <div id="kv-container">
-        <div class="kv-row">
-            <input type="text" name="keys" placeholder="Key" required/>
-            <input type="text" name="values" placeholder="Value" required/>
-            <button type="button" onclick="addKVRow()">+</button>
+<!-- 簽章區塊 -->
+<div class="key-section">
+    <div class="section-title">4. 簽章</div>
+    <form th:action="@{/sign}" method="post" id="signForm">
+        <div id="kv-container">
+            <div class="kv-row">
+                <input type="text" name="keys" placeholder="Key" required/>
+                <input type="text" name="values" placeholder="Value" required/>
+                <button type="button" onclick="addKVRow()">+</button>
+            </div>
         </div>
-    </div>
-    <button type="submit">簽章</button>
-</form>
+        <button type="submit">簽章</button>
+    </form>
+</div>
+
 <script>
 function addKVRow() {
     const container = document.getElementById('kv-container');
@@ -45,12 +80,12 @@ function removeKVRow(btn) {
     btn.parentNode.remove();
 }
 </script>
-<style>
-.kv-row { margin-bottom: 5px; }
-.kv-row input { margin-right: 5px; }
-</style>
-<div th:if="${signature != null}">
-    <p><b>簽章結果：</b> <span th:text="${signature}"></span></p>
+
+<!-- 簽章結果顯示 -->
+<div th:if="${signature != null}" class="key-section">
+    <div class="section-title">5. 簽章結果</div>
+    <p><b>簽章結果：</b></p>
+    <textarea class="signature-field" readonly th:text="${signature}"></textarea>
     <div th:if="${jwtHeader != null}">
         <b>JWT Header：</b>
         <pre th:text="${jwtHeader}"></pre>
@@ -62,19 +97,32 @@ function removeKVRow(btn) {
 </div>
 
 <hr/>
-<form th:action="@{/verify}" method="post">
-    <label>訊息：<br/>
-        <textarea name="message" rows="3" cols="60" th:text="${jwtPayload}" readonly></textarea>
-    </label><br/>
-    <label>簽章：<input type="text" name="signature" th:value="${signature}"/></label>
-    <button type="submit">驗章</button>
-</form>
-<div th:if="${verifyResult != null}">
+<!-- 驗章區塊 -->
+<div class="key-section">
+    <div class="section-title">6. 驗章</div>
+    <form th:action="@{/verify}" method="post">
+        <label>訊息：<br/>
+            <textarea name="message" rows="3" cols="60" th:text="${jwtPayload}" readonly></textarea>
+        </label><br/>
+        <label>簽章：<br/>
+            <textarea name="signature" class="signature-field" th:text="${signature}"></textarea>
+        </label><br/>
+        <button type="submit">驗章</button>
+    </form>
+</div>
+
+<div th:if="${verifyResult != null}" class="key-section">
+    <div class="section-title">7. 驗章結果</div>
     <p><b>驗章結果：</b> <span th:text="${verifyResult}"></span></p>
 </div>
 
+<!-- 訊息顯示 -->
 <div th:if="${error != null}">
-    <p style="color:red;" th:text="${error}"></p>
+    <p class="error" th:text="${error}"></p>
+</div>
+
+<div th:if="${success != null}">
+    <p class="success" th:text="${success}"></p>
 </div>
 
 </body>

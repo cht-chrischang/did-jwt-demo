@@ -34,10 +34,36 @@ public class DidKeyController {
         return "index";
     }
 
+    @PostMapping("/setCustomKeys")
+    public String setCustomKeys(@RequestParam String publicKeyInput, @RequestParam String privateKeyInput, Model model) throws Exception {
+        try {
+            // 從 Base64 字串重建 KeyPair
+            byte[] pubBytes = Base64.getDecoder().decode(publicKeyInput);
+            byte[] privBytes = Base64.getDecoder().decode(privateKeyInput);
+            
+            java.security.spec.X509EncodedKeySpec pubSpec = new java.security.spec.X509EncodedKeySpec(pubBytes);
+            java.security.spec.PKCS8EncodedKeySpec privSpec = new java.security.spec.PKCS8EncodedKeySpec(privBytes);
+            
+            java.security.KeyFactory kf = java.security.KeyFactory.getInstance("EC", "BC");
+            PublicKey publicKey = kf.generatePublic(pubSpec);
+            PrivateKey privateKey = kf.generatePrivate(privSpec);
+            
+            lastKeyPair = new KeyPair(publicKey, privateKey);
+            String did = didKeyService.getDidFromPublicKey(lastKeyPair.getPublic());
+            model.addAttribute("did", did);
+            model.addAttribute("publicKey", publicKeyInput);
+            model.addAttribute("privateKey", privateKeyInput);
+            model.addAttribute("success", "自訂金鑰設定成功");
+        } catch (Exception e) {
+            model.addAttribute("error", "金鑰格式錯誤: " + e.getMessage());
+        }
+        return "index";
+    }
+
     @PostMapping("/sign")
     public String sign(@RequestParam("keys") java.util.List<String> keys, @RequestParam("values") java.util.List<String> values, Model model) throws Exception {
         if (lastKeyPair == null) {
-            model.addAttribute("error", "請先產生 DID key");
+            model.addAttribute("error", "請先產生 DID key 或設定自訂金鑰");
             return "index";
         }
         // 組成 payload JSON
@@ -76,7 +102,7 @@ public class DidKeyController {
     @PostMapping("/verify")
     public String verify(@RequestParam String message, @RequestParam String signature, Model model) throws Exception {
         if (lastKeyPair == null) {
-            model.addAttribute("error", "請先產生 DID key");
+            model.addAttribute("error", "請先產生 DID key 或設定自訂金鑰");
             return "index";
         }
         // 驗證 JWT 簽章
